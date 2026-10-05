@@ -11,11 +11,10 @@
 #include <sys/mman.h>
 #include <semaphore.h>
 
-// --- NEW: Static variables for centralized queue management (Bat 1) ---
 static NodeQueue nodeQueues[1000];
 static int globalArrivalCounter = 0;
 static int nodeOwner[1000];
-// ---------------------------------------------------------------------
+
 
 // Create a new graph with a given number of vertices
 Graph* createGraph(int vertices){
@@ -45,7 +44,7 @@ Graph* createGraph(int vertices){
         }
     }
 
-    // --- NEW: Allocate private agent semaphores for parent-driven centralized control ---
+    //  Allocate private agent semaphores for parent-driven centralized control 
     graph->agent_semaphores = (sem_t*)mmap(NULL, MAX_PASSENGERS * sizeof(sem_t),
                                            PROT_READ | PROT_WRITE,
                                            MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -56,7 +55,7 @@ Graph* createGraph(int vertices){
     for (int i = 0; i < MAX_PASSENGERS; i++) {
         sem_init(&(graph->agent_semaphores[i]), 1, 0); // Start blocked (0)
     }
-    // --------------------------------------------------------------------------------
+   
 
     return graph;
 }
@@ -71,7 +70,7 @@ void addEdge(Graph* graph, int src, int dest, int weight) {
 }
 
 // Load graph structure and dynamic travelers arrays from the input file
-// --- NEW: Updated signature and logic to parse burst times for SJF ---
+//  Updated signature and logic to parse burst times for SJF
 Graph* loadGraphFromFile(const char* filename, int** sourcesArray, int** destsArray, int** burstTimesArray, int* numTravelers) {
 
     // Open the input file for reading operations only
@@ -150,7 +149,7 @@ Graph* loadGraphFromFile(const char* filename, int** sourcesArray, int** destsAr
         return graph;
     }
 
-    // Read all individual source, destination, and (optional) burst time parameters
+    // Read all individual source, destination, and burst time parameters
     for (int i = 0; i < *numTravelers; i++) {
         int src, dst, burst = 10;
         // Attempt to read 3 values: Source, Destination, and Burst Time
@@ -183,14 +182,14 @@ void freeGraph(Graph* graph) {
         munmap(graph->semaphores, graph->numVertices * sizeof(sem_t));
     }
 
-    // --- NEW: Clean up the new agent semaphores ---
+    //  Clean up the new agent semaphores 
     if (graph->agent_semaphores != NULL) {
         for (int i = 0; i < MAX_PASSENGERS; i++) {
             sem_destroy(&(graph->agent_semaphores[i]));
         }
         munmap(graph->agent_semaphores, MAX_PASSENGERS * sizeof(sem_t));
     }
-    // ----------------------------------------------
+   
 
     for (int i = 0; i < graph->numVertices; i++) {
         Node* temp = graph->adjLists[i];
@@ -390,7 +389,7 @@ Path reconstructPath(int* parent, int src, int dst) {
 
 
 // =================================================================
-// NEW: Bat 1 Centralized API Implementation (Queue Management & Scheduling)
+//  Centralized API Implementation (Queue Management & Scheduling)
 // =================================================================
 
 // Initializes the tracking arrays for all node queues
@@ -402,7 +401,6 @@ void initNodeQueues(int numVertices) {
     }
 }
 
-// Adds a vehicle to the waiting queue of a specific node
 // Adds a vehicle to the waiting queue of a specific node
 void addToNodeQueue(int node, int agentIndex, int priority) {
     if (node < 0 || node >= 1000) return;
@@ -424,7 +422,7 @@ void addToNodeQueue(int node, int agentIndex, int priority) {
     nq->count++;
 }
 
-// The core logic function: decides who enters the intersection next
+// decides who enters the intersection next
 int scheduleNextAgent(int node, int algorithmType) {
     if (node < 0 || node >= 1000 || nodeQueues[node].count == 0) return -1;
 
@@ -472,7 +470,7 @@ int getNodeOwner(int node) {
     return -1;
 }
 
-// --- NEW: Dummy implementations for visual updates (Now handled centrally in main.c) ---
+//  implementations for visual updates 
 void updateEntity(Entity* entity, Graph* graph, Path* path) {
     (void)entity; (void)graph; (void)path;
 }
